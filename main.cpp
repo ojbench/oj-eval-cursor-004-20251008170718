@@ -214,7 +214,12 @@ public:
         if (accountCache.find(userID) == accountCache.end()) return false;
         
         Account& acc = accountCache[userID];
-        if (!currentPassword.empty() && currentPassword != acc.password) {
+        
+        // If currentPassword is provided, it must match (unless privilege 7 can skip verification)
+        if (!currentPassword.empty()) {
+            if (currentPassword != acc.password) return false;
+        } else {
+            // If currentPassword is empty, only privilege 7 can proceed
             if (getCurrentPrivilege() != 7) return false;
         }
         
