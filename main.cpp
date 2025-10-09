@@ -535,14 +535,34 @@ private:
         return true;
     }
     
+    bool isValidISBN(const string& str) {
+        if (str.empty() || str.length() > 20) return false;
+        for (char c : str) {
+            if (c < 33 || c > 126) return false; // visible ASCII
+        }
+        return true;
+    }
+    
+    bool isValidBookString(const string& str) {
+        if (str.empty() || str.length() > 60) return false;
+        for (char c : str) {
+            if (c < 33 || c > 126 || c == '"') return false; // visible ASCII except "
+        }
+        return true;
+    }
+    
     bool isValidKeyword(const string& str) {
-        if (str.empty()) return false;
+        if (str.empty() || str.length() > 60) return false;
         set<string> keywords;
         stringstream ss(str);
         string k;
         while (getline(ss, k, '|')) {
             if (k.empty()) return false;
             if (keywords.count(k)) return false;
+            // Each keyword segment should be valid book string
+            for (char c : k) {
+                if (c < 33 || c > 126 || c == '"') return false;
+            }
             keywords.insert(k);
         }
         return true;
@@ -654,6 +674,7 @@ public:
             string currentPassword = tokens.size() == 4 ? tokens[2] : "";
             string newPassword = tokens.size() == 4 ? tokens[3] : tokens[2];
             if (!isValidUserID(userID) || !isValidUserID(newPassword)) return false;
+            if (tokens.size() == 4 && !isValidUserID(currentPassword)) return false;
             return accountMgr.changePassword(userID, currentPassword, newPassword);
         }
         else if (cmd == "useradd") {
@@ -712,21 +733,22 @@ public:
                 if (param.substr(0, 6) == "-ISBN=") {
                     type = "ISBN";
                     value = param.substr(6);
+                    if (!isValidISBN(value)) return false;
                 } else if (param.substr(0, 6) == "-name=") {
                     type = "name";
                     value = extractQuoted(param);
+                    if (!isValidBookString(value)) return false;
                 } else if (param.substr(0, 8) == "-author=") {
                     type = "author";
                     value = extractQuoted(param);
+                    if (!isValidBookString(value)) return false;
                 } else if (param.substr(0, 9) == "-keyword=") {
                     type = "keyword";
                     value = extractQuoted(param);
+                    if (value.empty() || value.find('|') != string::npos) return false;
                 } else {
                     return false;
                 }
-                
-                if (value.empty()) return false;
-                if (type == "keyword" && value.find('|') != string::npos) return false;
                 
                 vector<Book> books = bookMgr.showBooks(type, value);
                 if (books.empty()) cout << "\n";
@@ -742,6 +764,7 @@ public:
             if (accountMgr.getCurrentPrivilege() < 1) return false;
             if (tokens.size() != 3) return false;
             string isbn = tokens[1];
+            if (!isValidISBN(isbn)) return false;
             if (!isValidInteger(tokens[2])) return false;
             int quantity;
             if (!safeStoi(tokens[2], quantity)) return false;
@@ -758,6 +781,7 @@ public:
             if (accountMgr.getCurrentPrivilege() < 3) return false;
             if (tokens.size() != 2) return false;
             string isbn = tokens[1];
+            if (!isValidISBN(isbn)) return false;
             bookMgr.selectBook(isbn);
             accountMgr.setSelectedBook(isbn);
             return true;
@@ -778,15 +802,15 @@ public:
                 if (param.substr(0, 6) == "-ISBN=") {
                     paramType = "ISBN";
                     newISBN = param.substr(6);
-                    if (newISBN.empty()) return false;
+                    if (!isValidISBN(newISBN)) return false;
                 } else if (param.substr(0, 6) == "-name=") {
                     paramType = "name";
                     name = extractQuoted(param);
-                    if (name.empty()) return false;
+                    if (!isValidBookString(name)) return false;
                 } else if (param.substr(0, 8) == "-author=") {
                     paramType = "author";
                     author = extractQuoted(param);
-                    if (author.empty()) return false;
+                    if (!isValidBookString(author)) return false;
                 } else if (param.substr(0, 9) == "-keyword=") {
                     paramType = "keyword";
                     keyword = extractQuoted(param);
