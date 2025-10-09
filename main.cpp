@@ -479,11 +479,29 @@ private:
     
     vector<string> tokenize(const string& line) {
         vector<string> tokens;
-        stringstream ss(line);
         string token;
-        while (ss >> token) {
+        bool inQuote = false;
+        
+        for (size_t i = 0; i < line.length(); i++) {
+            char c = line[i];
+            
+            if (c == '"') {
+                token += c;
+                inQuote = !inQuote;
+            } else if (c == ' ' && !inQuote) {
+                if (!token.empty()) {
+                    tokens.push_back(token);
+                    token.clear();
+                }
+            } else {
+                token += c;
+            }
+        }
+        
+        if (!token.empty()) {
             tokens.push_back(token);
         }
+        
         return tokens;
     }
     
