@@ -1,0 +1,11 @@
+CMakeFiles/
+CMakeCache.txt
+cmake_install.cmake
+Makefile
+*.o
+code
+*.dat
+*.bin
+*.log
+.vscode/
+.idea/
