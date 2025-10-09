@@ -525,6 +525,54 @@ private:
         return true;
     }
     
+    bool safeStoi(const string& str, int& result) {
+        if (str.empty()) return false;
+        try {
+            size_t pos;
+            result = stoi(str, &pos);
+            if (pos != str.length()) return false;
+            // Check for negative in contexts where it shouldn't be
+            return true;
+        } catch (...) {
+            return false;
+        }
+    }
+    
+    bool safeStod(const string& str, double& result) {
+        if (str.empty()) return false;
+        try {
+            size_t pos;
+            result = stod(str, &pos);
+            if (pos != str.length()) return false;
+            return true;
+        } catch (...) {
+            return false;
+        }
+    }
+    
+    bool isValidPrice(const string& str) {
+        if (str.empty()) return false;
+        int dotCount = 0;
+        for (size_t i = 0; i < str.length(); i++) {
+            char c = str[i];
+            if (c == '.') {
+                dotCount++;
+                if (dotCount > 1) return false;
+            } else if (!isdigit(c)) {
+                return false;
+            }
+        }
+        return true;
+    }
+    
+    bool isValidInteger(const string& str) {
+        if (str.empty()) return false;
+        for (char c : str) {
+            if (!isdigit(c)) return false;
+        }
+        return true;
+    }
+    
 public:
     void run() {
         string line;
@@ -590,7 +638,9 @@ public:
             if (tokens.size() != 5) return false;
             string userID = tokens[1];
             string password = tokens[2];
-            int privilege = stoi(tokens[3]);
+            if (!isValidInteger(tokens[3])) return false;
+            int privilege;
+            if (!safeStoi(tokens[3], privilege)) return false;
             string username = tokens[4];
             if (!isValidUserID(userID) || !isValidUserID(password)) return false;
             if (privilege != 1 && privilege != 3 && privilege != 7) return false;
@@ -617,7 +667,11 @@ public:
             }
             else if (tokens[1] == "finance") {
                 if (accountMgr.getCurrentPrivilege() < 7) return false;
-                int count = tokens.size() == 3 ? stoi(tokens[2]) : -1;
+                int count = -1;
+                if (tokens.size() == 3) {
+                    if (!isValidInteger(tokens[2])) return false;
+                    if (!safeStoi(tokens[2], count)) return false;
+                }
                 double income, expenditure;
                 if (!logMgr.showFinance(count, income, expenditure)) return false;
                 if (count == 0) {
@@ -665,7 +719,9 @@ public:
             if (accountMgr.getCurrentPrivilege() < 1) return false;
             if (tokens.size() != 3) return false;
             string isbn = tokens[1];
-            int quantity = stoi(tokens[2]);
+            if (!isValidInteger(tokens[2])) return false;
+            int quantity;
+            if (!safeStoi(tokens[2], quantity)) return false;
             if (quantity <= 0) return false;
             
             double totalCost;
@@ -714,7 +770,10 @@ public:
                     if (keyword.empty() || !isValidKeyword(keyword)) return false;
                 } else if (param.substr(0, 7) == "-price=") {
                     paramType = "price";
-                    price = stod(param.substr(7));
+                    string priceStr = param.substr(7);
+                    if (!isValidPrice(priceStr)) return false;
+                    if (!safeStod(priceStr, price)) return false;
+                    if (price < 0) return false;
                 } else {
                     return false;
                 }
@@ -739,8 +798,12 @@ public:
             if (isbn.empty()) return false;
             if (tokens.size() != 3) return false;
             
-            int quantity = stoi(tokens[1]);
-            double totalCost = stod(tokens[2]);
+            if (!isValidInteger(tokens[1])) return false;
+            if (!isValidPrice(tokens[2])) return false;
+            int quantity;
+            double totalCost;
+            if (!safeStoi(tokens[1], quantity)) return false;
+            if (!safeStod(tokens[2], totalCost)) return false;
             if (quantity <= 0 || totalCost <= 0) return false;
             
             if (!bookMgr.importBook(isbn, quantity, totalCost)) return false;
