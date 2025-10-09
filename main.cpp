@@ -536,19 +536,11 @@ private:
     }
     
     bool isValidISBN(const string& str) {
-        if (str.empty() || str.length() > 20) return false;
-        for (char c : str) {
-            if (c < 33 || c > 126) return false; // visible ASCII
-        }
-        return true;
+        return !str.empty() && str.length() <= 20;
     }
     
     bool isValidBookString(const string& str) {
-        if (str.empty() || str.length() > 60) return false;
-        for (char c : str) {
-            if (c < 33 || c > 126 || c == '"') return false; // visible ASCII except "
-        }
-        return true;
+        return !str.empty() && str.length() <= 60;
     }
     
     bool isValidKeyword(const string& str) {
@@ -559,10 +551,6 @@ private:
         while (getline(ss, k, '|')) {
             if (k.empty()) return false;
             if (keywords.count(k)) return false;
-            // Each keyword segment should be valid book string
-            for (char c : k) {
-                if (c < 33 || c > 126 || c == '"') return false;
-            }
             keywords.insert(k);
         }
         return true;
